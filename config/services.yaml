@@ -1,0 +1,5 @@
+services:
+  shcc.tts.yandex:
+#    class: SHCC\Yandex\TtsApi
+  
+  SHCC\Yandex\TtsApi: '@shcc.tts.yandex'

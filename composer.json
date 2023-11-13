@@ -1,0 +1,23 @@
+{
+    "name": "fsa/shcc-yandex",
+    "description": "Плагин SHCC для Yandex",
+    "keywords": [
+        "shcc"
+    ],
+    "type": "library",
+    "authors": [
+        {
+            "name": "Sergei Fedotov",
+            "email": "fsa@tavda.info"
+        }
+    ],
+    "license": "GPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "SHCC\\Yandex\\": "src/"
+        }
+    },
+    "require": {
+        "fsa/shcc-framework": "dev-symfony"
+    }
+}
