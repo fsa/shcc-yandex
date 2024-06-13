@@ -10,12 +10,13 @@
  * & speaker=<jane|oksana|alyss|omazh|zahar|ermil>
  * & [speed=<скорость речи>]
  * & [emotion=<good|neutral|evil>]
+ * TODO: Новая версия:
+ * https://yandex.cloud/ru/docs/speechkit/tts/request
  */
 
-namespace SHCC\Yandex;
+namespace Shcc\YandexBundle;
 
 use ShccBundle\TTS\ProviderInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class TtsApi implements ProviderInterface
 {
@@ -28,17 +29,38 @@ class TtsApi implements ProviderInterface
     private array $params;
 
     public function __construct(
-        #[Autowire(param: 'tts.yandex')]
         array $params,
     ) {
+        foreach ($params as $key => $value) {
+            switch ($key) {
+                case 'format':
+                case 'quality':
+                case 'lang':
+                case 'speaker':
+                case 'speed':
+                case 'emotion':
+                    break;
+                default:
+                    throw new TtsApiConfigErrorException("Invalid parameter $key");
+            }
+        }
         $this->params = array_merge([
             'speaker' => 'jane',
             'format' => 'mp3',
             'lang' => 'ru-RU',
-            'emotion' => 'neutral'
         ], $params);
         $this->validateSpeaker($this->params['speaker']);
-        $this->validateEmotion($this->params['emotion']);
+        $this->validateFormat($this->params['format']);
+        $this->validateLang($this->params['lang']);
+        if (isset($this->params['quality'])) {
+            $this->validateQuality($this->params['quality']);
+        }
+        if (isset($this->params['speed'])) {
+            $this->validateSpeed($this->params['speed']);
+        }
+        if (isset($this->params['emotion'])) {
+            $this->validateEmotion($this->params['emotion']);
+        }
         $cache_dir = getenv('CACHE_DIRECTORY');
         if ($cache_dir == '') {
             $cache_dir = '/var/cache/shcc';
@@ -46,49 +68,87 @@ class TtsApi implements ProviderInterface
         $this->cache_dir = $cache_dir . '/yandex/' . $this->params['speaker'] . '/' . $this->params['lang'] . '/' . $this->params['emotion'] . '/';
     }
 
-    public function setSpeaker($name): void
+    public function setSpeaker(string $speaker): void
     {
-        if ($this->validateSpeaker($name)) {
-            $this->params['speaker'] = $name;
-            return;
-        }
-        throw new YandexException('Unknown speaker');
+        $this->validateSpeaker($speaker);
+        $this->params['speaker'] = $speaker;
     }
 
-    private function validateSpeaker($name): bool
+    public function setLang(string $lang): void
     {
-        switch ($name) {
+        $this->validateLang($lang);
+        $this->params['lang'] = $lang;
+    }
+
+    public function setEmotion(string $emotion): void
+    {
+        $this->validateEmotion($emotion);
+        $this->params['emotion'] = $emotion;
+    }
+
+    private function validateSpeaker(string $speaker): void
+    {
+        switch ($speaker) {
             case "jane":
             case "oksana":
             case "alyss":
             case "omazh":
             case "zahar":
             case "ermil":
-                return true;
-                break;
+                return;
         }
-        return false;
+        throw new TtsApiConfigErrorException('Invalid value of the speaker parameter');
     }
 
-    public function setEmotion($name): void
+    private function validateEmotion(string $emotion): void
     {
-        if ($this->validateEmotion($name)) {
-            $this->params['emotion'] = $name;
-            return;
-        }
-        throw new YandexException('Unknown emotions');
-    }
-
-    private function validateEmotion($name): bool
-    {
-        switch ($name) {
+        switch ($emotion) {
             case "good":
             case "neutral":
             case "evil":
-                return true;
-                break;
+                return;
         }
-        return false;
+        throw new TtsApiConfigErrorException('Invalid value of the emotions parameter');
+    }
+
+    private function validateFormat(string $format): void
+    {
+        switch ($format) {
+            case "mp3":
+            case "wav":
+            case "opus":
+                return;
+        }
+        throw new TtsApiConfigErrorException('Invalid value of the format parameter');
+    }
+
+    private function validateQuality(string $quality): void
+    {
+        switch ($quality) {
+            case "hi":
+            case "lo":
+                return;
+        }
+        throw new TtsApiConfigErrorException('Invalid value of the quality parameter');
+    }
+
+    private function validateLang(string $lang): void
+    {
+        switch ($lang) {
+            case "ru-RU":
+            case "en-US":
+            case "uk-UK":
+            case "tr-TR":
+                return;
+        }
+        throw new TtsApiConfigErrorException('Invalid value of the lang parameter');
+    }
+
+    private function validateSpeed(float $speed): void
+    {
+        if ($speed < 0.1 or $speed > 3.0) {
+            throw new TtsApiConfigErrorException('The "speed" value is not in the range of 0.1 to 3.0');
+        }
     }
 
     public function getUrl($text): string

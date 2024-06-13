@@ -14,10 +14,10 @@
     "license": "GPL-3.0-or-later",
     "autoload": {
         "psr-4": {
-            "SHCC\\Yandex\\": "src/"
+            "Shcc\\YandexBundle\\": "src/"
         }
     },
     "require": {
-        "fsa/shcc-framework": "dev-symfony"
+        "fsa/shcc-framework": "dev-local"
     }
 }
